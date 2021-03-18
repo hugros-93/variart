@@ -6,6 +6,8 @@ from IPython import display
 import plotly.express as px
 from plotly.subplots import make_subplots
 
+# Reference: https://www.tensorflow.org/tutorials/generative/cvae
+
 
 def log_normal_pdf(sample, mean, logvar, raxis=1):
     """
@@ -47,18 +49,10 @@ class VAE(tf.keras.Model):
         mean, logvar = self.encode(x)
         z = self.reparameterize(mean, logvar)
         x_logit = self.decode(z)
-        # x_logit = tf.cast(x_logit, tf.float32)
-
         cross_ent = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_logit, labels=x)
-
         logpx_z = -tf.reduce_sum(cross_ent)
         logpz = log_normal_pdf(z, 0.0, 0.0)
         logqz_x = log_normal_pdf(z, mean, logvar)
-
-        # logpx_z = tf.cast(logpx_z, tf.float32)
-        # logqz_x = tf.cast(logqz_x, tf.float32)
-        # logpz = tf.cast(logpz, tf.float32)
-
         return -tf.reduce_mean(logpx_z + logpz - logqz_x)
 
     def decode(self, z, apply_sigmoid=False):
