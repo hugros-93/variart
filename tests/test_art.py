@@ -1,2 +1,2 @@
 import pytest
-from variart.art import ArtObject, ArtObject
+from variart.art import ArtVideo

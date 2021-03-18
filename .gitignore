@@ -4,3 +4,6 @@ outputs/
 venv/
 .vscode
 token.txt
+
+*.h5
+*.json
