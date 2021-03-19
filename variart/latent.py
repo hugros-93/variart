@@ -36,7 +36,7 @@ class Latent:
         fig = go.Figure()
         if clusterer:
             marker_color = clusterer.labels_
-            text = (clusterer.labels_,)
+            text = clusterer.labels_
         else:
             marker_color = "black"
             text = ""
@@ -87,8 +87,16 @@ class Latent:
     def plot_encoded_decoded(self, list_id):
         fig = make_subplots(rows=2, cols=len(list_id))
         for i, j in enumerate(list_id):
-            fig.add_trace(px.imshow(np.interp(self.data[j], (0, 1), (0, 255))).data[0], row=1, col=i + 1)
-            fig.add_trace(px.imshow(np.interp(self.Z_decoded[i], (0, 1), (0, 255))).data[0], row=2, col=i + 1)
+            fig.add_trace(
+                px.imshow(np.interp(self.data[j], (0, 1), (0, 255))).data[0],
+                row=1,
+                col=i + 1,
+            )
+            fig.add_trace(
+                px.imshow(np.interp(self.Z_decoded[i], (0, 1), (0, 255))).data[0],
+                row=2,
+                col=i + 1,
+            )
         fig.update_layout(
             height=2 * self.size * self.scale,
             width=self.size * len(list_id) * self.scale,
@@ -127,7 +135,11 @@ class Latent:
         for i, z in enumerate(list_z):
             decoded_img = np.array(z).reshape(1, self.model.latent_dim)
             decoded_img = self.model.decode(decoded_img, apply_sigmoid=True)[0]
-            fig.add_trace(px.imshow(np.interp(decoded_img, (0, 1), (0, 255))).data[0], row=1, col=i + 1)
+            fig.add_trace(
+                px.imshow(np.interp(decoded_img, (0, 1), (0, 255))).data[0],
+                row=1,
+                col=i + 1,
+            )
         fig.update_layout(
             height=self.size * self.scale,
             width=self.size * n * self.scale,
@@ -138,7 +150,7 @@ class Latent:
         fig.update_yaxes(showticklabels=False)
         return list_z, fig
 
-    def create_gif(self, list_z, step=5):
+    def create_gif(self, list_z, filename, step=5):
         n_z = len(list_z)
         images = []
         for c in range(n_z - 1):
@@ -151,7 +163,6 @@ class Latent:
                 decoded_img = np.interp(np.array(decoded_img[0]), (0, 1), (0, 255))
                 images.append(np.array(decoded_img, np.uint8))
 
-        anim_file = f"../results/{self.name}.gif"
-        with imageio.get_writer(anim_file, mode="I") as writer:
+        with imageio.get_writer(filename, mode="I") as writer:
             for image in images:
                 writer.append_data(image)
