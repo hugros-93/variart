@@ -3,6 +3,7 @@ import numpy as np
 import random
 import plotly.express as px
 
+
 class ArtObject:
     """
     Class to define a general art objects.
@@ -18,10 +19,12 @@ class ArtObject:
         self.X = np.interp(self.X, (0, 255), (0, 1))
 
     def show_random_image(self):
-        i = random.randint(0, self.shape[0]-1)
+        i = random.randint(0, self.shape[0] - 1)
         img = self.X[i]
         fig = px.imshow(img)
-        fig.update_layout(coloraxis_showscale=False)
+        fig.update_layout(
+            coloraxis_showscale=False, margin={"l": 0, "r": 0, "t": 0, "b": 0}
+        )
         fig.update_xaxes(showticklabels=False)
         fig.update_yaxes(showticklabels=False)
         fig.show()
