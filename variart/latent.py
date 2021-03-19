@@ -14,7 +14,7 @@ class Latent:
         self.data = data
         self.model = model
         if not name:
-            name = self.model.name
+            name = self.model.name_model
         self.name = name
         self.Z = None
         self.size = self.data.shape[1]
@@ -37,6 +37,7 @@ class Latent:
         if clusterer:
             marker_color = clusterer.labels_
             text = clusterer.labels_
+            txt_clust=" - after clustering"
         else:
             marker_color = "black"
             text = ""
@@ -49,6 +50,7 @@ class Latent:
                 text=text,
             )
         )
+        fig.update_layout(title=f"t-SNE projection of latent representations{txt_clust}")
         return fig
 
     def compute_dist_coord(self):
@@ -56,10 +58,11 @@ class Latent:
             [[z[i] for z in np.array(self.Z)] for i in range(self.Z.shape[1])]
         )
 
-    def plot_latent_dist_to_center(self):
+    def plot_latent_dist_coord(self):
         fig = go.Figure()
         for i, y in enumerate(self.dist_coord):
             fig.add_trace(go.Box(y=y, name=i))
+        fig.update_layout(title="Distribution of latent dimensions")
         return fig
 
     def latent_space_clustering(self, grid):
@@ -82,6 +85,10 @@ class Latent:
                 name="Clusters",
             )
         )
+        fig.update_layout(
+            title="Silhouette score",
+            xaxis_title="nb. of clusters",
+            yaxis_title="silhouette score")
         return fig
 
     def plot_encoded_decoded(self, list_id):
