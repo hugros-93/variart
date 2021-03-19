@@ -37,7 +37,7 @@ class Latent:
         if clusterer:
             marker_color = clusterer.labels_
             text = clusterer.labels_
-            txt_clust=" - after clustering"
+            txt_clust = " - after clustering"
         else:
             marker_color = "black"
             text = ""
@@ -50,7 +50,9 @@ class Latent:
                 text=text,
             )
         )
-        fig.update_layout(title=f"t-SNE projection of latent representations{txt_clust}")
+        fig.update_layout(
+            title=f"t-SNE projection of latent representations{txt_clust}"
+        )
         return fig
 
     def compute_dist_coord(self):
@@ -88,7 +90,8 @@ class Latent:
         fig.update_layout(
             title="Silhouette score",
             xaxis_title="nb. of clusters",
-            yaxis_title="silhouette score")
+            yaxis_title="silhouette score",
+        )
         return fig
 
     def plot_encoded_decoded(self, list_id):
