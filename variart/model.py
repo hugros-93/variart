@@ -76,8 +76,8 @@ class VAE(tf.keras.Model):
     def plot_training_images(self, data_validation, x_logit, n_to_plot):
         fig = make_subplots(rows=2, cols=n_to_plot)
         for i in range(n_to_plot):
-            fig.add_trace(px.imshow(data_validation[i]).data[0], row=1, col=i + 1)
-            fig.add_trace(px.imshow(x_logit[i]).data[0], row=2, col=i + 1)
+            fig.add_trace(px.imshow(np.interp(data_validation[i], (0, 1), (0, 255))).data[0], row=1, col=i + 1)
+            fig.add_trace(px.imshow(np.interp(x_logit[i], (0, 1), (0, 255))).data[0], row=2, col=i + 1)
         fig.update_layout(coloraxis_showscale=False, hovermode=False)
         fig.update_xaxes(showticklabels=False)
         fig.update_yaxes(showticklabels=False)
@@ -111,8 +111,8 @@ class VAE(tf.keras.Model):
         self.generative_net.build(input_shape=(batch_size, self.latent_dim))
 
         # load weights into new model
-        inference_net.load_weights(f'{self.name_model}_encoder.h5')
-        generative_net.load_weights(f'{self.name_model}_decoder.h5')
+        self.inference_net.load_weights(f'{self.name_model}_encoder.h5')
+        self.generative_net.load_weights(f'{self.name_model}_decoder.h5')
         print("Loaded model from disk")
 
     def _early_stop(self):
