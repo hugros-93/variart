@@ -96,6 +96,25 @@ class VAE(tf.keras.Model):
         self.inference_net.save_weights(f"{self.name_model}_encoder.h5")
         self.generative_net.save_weights(f"{self.name_model}_decoder.h5")
 
+    def load_model(self, batch_size):
+        # load json and create model
+        json_file = open(f'{self.name_model}_encoder.json', 'r')
+        loaded_model_json = json_file.read()
+        json_file.close()
+        self.inference_net = tf.keras.models.model_from_json(loaded_model_json)
+        self.inference_net.build(input_shape=self.input_shape_tuple)
+
+        json_file = open(f'{self.name_model}_decoder.json', 'r')
+        loaded_model_json = json_file.read()
+        json_file.close()
+        self.generative_net = tf.keras.models.model_from_json(loaded_model_json)
+        self.generative_net.build(input_shape=(batch_size, self.latent_dim))
+
+        # load weights into new model
+        inference_net.load_weights(f'{self.name_model}_encoder.h5')
+        generative_net.load_weights(f'{self.name_model}_decoder.h5')
+        print("Loaded model from disk")
+
     def _early_stop(self):
 
         print(f"early stop : {self.epoch}")
