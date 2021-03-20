@@ -160,7 +160,7 @@ class VAE(tf.keras.Model):
         :param early_stop_patience: number of iteration without improvement on the validation set before stopping
         :param freq_plot: frequency for image plot
         :param plot_test: plot test images if True
-        :param n_to_plot: number of val. image to plot (ecoded/decoded)
+        :param n_to_plot: number of val. image to plot (encoded/decoded)
         :return: trained model
 
         """

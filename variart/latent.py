@@ -126,7 +126,7 @@ class Latent:
         """
         For `method`, use "dist" to sample from learned distribution, "random" to randomly sample 
         from the latent space (centered in 0) and "from_id_img" to sample around a given image (need `id_img`).
-        The `c` parameter controle the deviation for sampling arround mean, center or image.
+        The `c` parameter controle the deviation for sampling around mean, center or image.
         """
 
         if method == "dist":
