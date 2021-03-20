@@ -66,8 +66,13 @@ for label in [3, 4, 8]:
 ```
 `output:`
 
+**label_3**
 ![label_3](outputs/label_3.png)
+
+**label_4**
 ![label_4](outputs/label_4.png)
+
+**label_8**
 ![label_8](outputs/label_8.png)
 
 By sampling in the latent space, it is possible to generate new images through decoding.
