@@ -8,7 +8,7 @@ Use variational autoencoders to perfom image latent analysis and generate new im
 - Train a VAE using __tensorflow__
 - Perform latent space analysis, generate new images and create GIFs
 
-![GIF DrillFR4](https://github.com/hugros-93/variart/outputs/DrillFR4.gif)
+![GIF DrillFR4](https://github.com/hugros-93/variart/blob/init/outputs/gif_DrillFR4.gif)
 
 ```python
 from variart.preprocessing import ArtVideos
