@@ -104,7 +104,7 @@ class Latent:
                 col=i + 1,
             )
             fig.add_trace(
-                px.imshow(np.interp(self.Z_decoded[i], (0, 1), (0, 255))).data[0],
+                px.imshow(np.interp(self.Z_decoded[j], (0, 1), (0, 255))).data[0],
                 row=2,
                 col=i + 1,
             )
@@ -135,7 +135,7 @@ class Latent:
             ]
         elif method == "from_id_img" and type(id_img) == int:
             list_z = [
-                self.Z[id_img] + np.random.normal(0, 1, self.Z.shape[1])
+                self.Z[id_img] + np.random.normal(0, c, self.Z.shape[1])
                 for _ in range(n)
             ]
         else:
