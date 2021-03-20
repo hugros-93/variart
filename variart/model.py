@@ -10,9 +10,6 @@ from plotly.subplots import make_subplots
 
 
 def log_normal_pdf(sample, mean, logvar, raxis=1):
-    """
-    Compute log normal density
-    """
     log2pi = tf.math.log(2.0 * np.pi)
     return tf.reduce_sum(
         -0.5 * ((sample - mean) ** 2.0 * tf.exp(-logvar) + logvar + log2pi), axis=raxis
@@ -20,9 +17,6 @@ def log_normal_pdf(sample, mean, logvar, raxis=1):
 
 
 def apply_gradients(optimizer, gradients, variables):
-    """
-    Apply gradient to variables
-    """
     optimizer.apply_gradients(zip(gradients, variables))
 
 
@@ -158,16 +152,16 @@ class VAE(tf.keras.Model):
         """
         Train VAE
 
-        :param optimizer: tf optimizer
-        :param train_dataset: tf dataset
-        :param validation_dataset: tf dataset
+        :param optimizer: tensorflow optimizer
+        :param train_dataset: tensorflow dataset for training
+        :param validation_dataset: tensorflow dataset for validation
         :param epochs: number of epochs
         :param batch_size: number of element for each batch
-        :param early_stop_patience: number of iteration without improvement in validation set before stopping
+        :param early_stop_patience: number of iteration without improvement on the validation set before stopping
         :param freq_plot: frequency for image plot
         :param plot_test: plot test images if True
-        :param n_to_plot: number of val. image to plot
-        :return: trained VAE
+        :param n_to_plot: number of val. image to plot (ecoded/decoded)
+        :return: trained model
 
         """
 
