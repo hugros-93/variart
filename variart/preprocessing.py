@@ -5,6 +5,7 @@ import random
 import plotly.express as px
 import matplotlib.pyplot as plt
 
+
 class ArtObject:
     """
     Class to define a general art objects.
@@ -51,6 +52,7 @@ class ArtObject:
         self.X = new_X
         self.shape = new_X.shape
 
+
 class ArtPictures(ArtObject):
     """
     Class to define picture object.
@@ -65,10 +67,11 @@ class ArtPictures(ArtObject):
         list_files = os.listdir(self.filename)
         list_data = []
         for file in list_files:
-            data = plt.imread(f'{self.filename}{file}')
+            data = plt.imread(f"{self.filename}{file}")
             list_data.append(data)
-        self.X = np.swapaxes(np.array(list_data),1,2)
+        self.X = np.swapaxes(np.array(list_data), 1, 2)
         self.shape = self.X.shape
+
 
 class ArtVideo(ArtObject):
     """

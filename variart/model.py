@@ -76,8 +76,16 @@ class VAE(tf.keras.Model):
     def plot_training_images(self, data_validation, x_logit, n_to_plot):
         fig = make_subplots(rows=2, cols=n_to_plot)
         for i in range(n_to_plot):
-            fig.add_trace(px.imshow(np.interp(data_validation[i], (0, 1), (0, 255))).data[0], row=1, col=i + 1)
-            fig.add_trace(px.imshow(np.interp(x_logit[i], (0, 1), (0, 255))).data[0], row=2, col=i + 1)
+            fig.add_trace(
+                px.imshow(np.interp(data_validation[i], (0, 1), (0, 255))).data[0],
+                row=1,
+                col=i + 1,
+            )
+            fig.add_trace(
+                px.imshow(np.interp(x_logit[i], (0, 1), (0, 255))).data[0],
+                row=2,
+                col=i + 1,
+            )
         fig.update_layout(coloraxis_showscale=False, hovermode=False)
         fig.update_xaxes(showticklabels=False)
         fig.update_yaxes(showticklabels=False)
@@ -98,21 +106,21 @@ class VAE(tf.keras.Model):
 
     def load_model(self, batch_size):
         # load json and create model
-        json_file = open(f'{self.name_model}_encoder.json', 'r')
+        json_file = open(f"{self.name_model}_encoder.json", "r")
         loaded_model_json = json_file.read()
         json_file.close()
         self.inference_net = tf.keras.models.model_from_json(loaded_model_json)
         self.inference_net.build(input_shape=self.input_shape_tuple)
 
-        json_file = open(f'{self.name_model}_decoder.json', 'r')
+        json_file = open(f"{self.name_model}_decoder.json", "r")
         loaded_model_json = json_file.read()
         json_file.close()
         self.generative_net = tf.keras.models.model_from_json(loaded_model_json)
         self.generative_net.build(input_shape=(batch_size, self.latent_dim))
 
         # load weights into new model
-        self.inference_net.load_weights(f'{self.name_model}_encoder.h5')
-        self.generative_net.load_weights(f'{self.name_model}_decoder.h5')
+        self.inference_net.load_weights(f"{self.name_model}_encoder.h5")
+        self.generative_net.load_weights(f"{self.name_model}_decoder.h5")
         print("Loaded model from disk")
 
     def _early_stop(self):
@@ -222,7 +230,9 @@ class VAE(tf.keras.Model):
                     self._save_network()
 
             if epoch % self.freq_plot == 0 and epoch > 0 and plot_test:
-                data_validation = np.concatenate([np.array(x) for x in validation_dataset])
+                data_validation = np.concatenate(
+                    [np.array(x) for x in validation_dataset]
+                )
                 x_logit = self.decode(
                     np.concatenate(test_vector_for_generation), apply_sigmoid=True
                 )
