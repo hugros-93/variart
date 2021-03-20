@@ -41,6 +41,7 @@ class Latent:
         else:
             marker_color = "black"
             text = ""
+            txt_clust=""
         fig.add_trace(
             go.Scattergl(
                 x=self.Z_tsne[:, 0],
