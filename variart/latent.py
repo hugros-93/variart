@@ -8,6 +8,8 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 from tqdm import tqdm
 
+from .preprocessing import rescale_image
+
 
 class Latent:
     """
@@ -102,13 +104,15 @@ class Latent:
     def plot_encoded_decoded(self, list_id):
         fig = make_subplots(rows=2, cols=len(list_id))
         for i, j in enumerate(list_id):
+            new_img = rescale_image(self.data[j])
             fig.add_trace(
-                px.imshow(np.interp(self.data[j], (0, 1), (0, 255))).data[0],
+                px.imshow(new_img).data[0],
                 row=1,
                 col=i + 1,
             )
+            new_img = rescale_image(self.Z_decoded[j])
             fig.add_trace(
-                px.imshow(np.interp(self.Z_decoded[j], (0, 1), (0, 255))).data[0],
+                px.imshow(new_img).data[0],
                 row=2,
                 col=i + 1,
             )
@@ -124,7 +128,7 @@ class Latent:
 
     def generate_image(self, n=1, c=1, method="dist", id_img=None):
         """
-        For `method`, use "dist" to sample from learned distribution, "random" to randomly sample 
+        For `method`, use "dist" to sample from learned distribution, "random" to randomly sample
         from the latent space (centered in 0) and "from_id_img" to sample around a given image (need `id_img`).
         The `c` parameter controle the deviation for sampling around mean, center or image.
         """
@@ -154,9 +158,11 @@ class Latent:
 
         for i, z in enumerate(list_z):
             decoded_img = np.array(z).reshape(1, self.model.latent_dim)
-            decoded_img = self.model.decode(decoded_img, apply_sigmoid=True)[0]
+            decoded_img = rescale_image(
+                self.model.decode(decoded_img, apply_sigmoid=True)[0]
+            )
             fig.add_trace(
-                px.imshow(np.interp(decoded_img, (0, 1), (0, 255))).data[0],
+                px.imshow(decoded_img).data[0],
                 row=1,
                 col=i + 1,
             )
@@ -179,8 +185,7 @@ class Latent:
             for i in range(step):
                 z = [y + i * (x - y) / step for x, y in zip(z2, z1)]
                 z = np.array(z).reshape(1, self.model.latent_dim)
-                decoded_img = self.model.decode(z, apply_sigmoid=True)
-                decoded_img = np.interp(np.array(decoded_img[0]), (0, 1), (0, 255))
+                decoded_img = rescale_image(self.model.decode(z, apply_sigmoid=True)[0])
                 images.append(np.array(decoded_img, np.uint8))
 
         with imageio.get_writer(filename, mode="I") as writer:

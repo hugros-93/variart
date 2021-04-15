@@ -2,11 +2,18 @@ import json
 import math
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.optimizers import Adam, RMSprop
 from IPython import display
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-# Reference: https://www.tensorflow.org/tutorials/generative/cvae
+from .preprocessing import rescale_image
+
+# References:
+# - https://www.tensorflow.org/tutorials/generative/cvae
+# - https://www.tensorflow.org/tutorials/generative/dcgan
+
+# VAE #
 
 
 def log_normal_pdf(sample, mean, logvar, raxis=1):
@@ -70,13 +77,15 @@ class VAE(tf.keras.Model):
     def plot_training_images(self, data_validation, x_logit, n_to_plot):
         fig = make_subplots(rows=2, cols=n_to_plot)
         for i in range(n_to_plot):
+            new_img = rescale_image(data_validation[i])
             fig.add_trace(
-                px.imshow(np.interp(data_validation[i], (0, 1), (0, 255))).data[0],
+                px.imshow(new_img).data[0],
                 row=1,
                 col=i + 1,
             )
+            new_img = rescale_image(x_logit[i])
             fig.add_trace(
-                px.imshow(np.interp(x_logit[i], (0, 1), (0, 255))).data[0],
+                px.imshow(new_img).data[0],
                 row=2,
                 col=i + 1,
             )
@@ -236,3 +245,205 @@ class VAE(tf.keras.Model):
                     self.n_to_plot,
                 )
         return self
+
+
+# GAN #
+
+cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+
+
+def generator_loss(fake_output, wgan=False):
+    if wgan:
+        return tf.reduce_mean(1 - fake_output)
+    else:
+        return cross_entropy(tf.ones_like(fake_output), fake_output)
+
+
+def discriminator_loss(real_output, fake_output, wgan=False):
+    if wgan:
+        real_loss = tf.reduce_mean(1 - real_output)
+        fake_loss = tf.reduce_mean(fake_output)
+    else:
+        real_loss = cross_entropy(tf.ones_like(real_output), real_output)
+        fake_loss = cross_entropy(tf.zeros_like(fake_output), fake_output)
+    total_loss = real_loss + fake_loss
+    return total_loss
+
+
+class GAN(tf.keras.Model):
+    """
+    Class to define a Generative Adversial Network (GAN)
+    """
+
+    def __init__(
+        self,
+        name_model,
+        noise_dim,
+        input_shape_tuple,
+        generator,
+        discriminator,
+        learning_rate=1e-4,
+        wgan=False,
+        scale=1.5,
+    ):
+        super().__init__()
+        self.name_model = name_model
+        self.noise_dim = noise_dim
+        self.input_shape_tuple = input_shape_tuple
+        self.generator = generator
+        self.discriminator = discriminator
+        self.wgan = wgan
+        self.learning_rate = learning_rate
+        self.size = input_shape_tuple[0]
+
+        if wgan:
+            self.generator_optimizer = RMSprop(learning_rate=learning_rate)
+            self.discriminator_optimizer = RMSprop(
+                learning_rate=learning_rate, clipvalue=0.01
+            )
+        else:
+            self.generator_optimizer = Adam(learning_rate)
+            self.discriminator_optimizer = Adam(learning_rate)
+
+    @tf.function
+    def generator_train_step(self, images):
+        noise = tf.random.normal([images.shape[0], self.noise_dim])
+
+        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+            generated_images = self.generator(noise, training=True)
+            fake_output = self.discriminator(generated_images, training=True)
+            gen_loss = generator_loss(fake_output, wgan=self.wgan)
+
+        gradients_of_generator = gen_tape.gradient(
+            gen_loss, self.generator.trainable_variables
+        )
+        self.generator_optimizer.apply_gradients(
+            zip(gradients_of_generator, self.generator.trainable_variables)
+        )
+
+        return gen_loss
+
+    @tf.function
+    def discriminator_train_step(self, images):
+        noise = tf.random.normal([images.shape[0], self.noise_dim])
+
+        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+            generated_images = self.generator(noise, training=True)
+            real_output = self.discriminator(images, training=True)
+            fake_output = self.discriminator(generated_images, training=True)
+            disc_loss = discriminator_loss(real_output, fake_output, wgan=self.wgan)
+
+        gradients_of_discriminator = disc_tape.gradient(
+            disc_loss, self.discriminator.trainable_variables
+        )
+        self.discriminator_optimizer.apply_gradients(
+            zip(gradients_of_discriminator, self.discriminator.trainable_variables)
+        )
+
+        return disc_loss
+
+    def print_epoch(self, epoch):
+        print(
+            f"Epoch {epoch+1} \t|\t gen_loss={self.gen_loss} \t|\t disc_loss={self.disc_loss}"
+        )
+
+    def generate_and_plot(self, n_to_plot, return_fig=False, scale=1.5):
+        fig = make_subplots(rows=1, cols=n_to_plot)
+        for i in range(n_to_plot):
+            noise = tf.random.normal([1, self.noise_dim])
+            generated_image = self.generator(noise, training=False)[0]
+            new_img = rescale_image(generated_image)
+            fig.add_trace(
+                px.imshow(new_img).data[0],
+                row=1,
+                col=i + 1,
+            )
+            fig.update_layout(
+                height=self.size * scale,
+                width=self.size * n_to_plot * scale,
+                coloraxis_showscale=False,
+                margin={"l": 0, "r": 0, "t": 0, "b": 0},
+            )
+        fig.update_xaxes(showticklabels=False)
+        fig.update_yaxes(showticklabels=False)
+        display.clear_output(wait=True)
+        fig.show()
+        if return_fig:
+            return fig
+
+    def _save_network(self):
+        # serialize model to JSON
+        model_json_generator = self.generator.to_json()
+        model_json_discriminator = self.discriminator.to_json()
+        with open(f"{self.name_model}_generator.json", "w") as json_file:
+            json_file.write(model_json_generator)
+        with open(f"{self.name_model}_discriminator.json", "w") as json_file:
+            json_file.write(model_json_discriminator)
+        # serialize weights to HDF5
+        self.generator.save_weights(f"{self.name_model}_generator.h5")
+        self.discriminator.save_weights(f"{self.name_model}_discriminator.h5")
+
+    def load_model(self, batch_size):
+        # load json and create model
+        json_file = open(f"{self.name_model}_generator.json", "r")
+        loaded_model_json = json_file.read()
+        json_file.close()
+        self.generator = tf.keras.models.model_from_json(loaded_model_json)
+        self.generator.build(input_shape=self.noise_dim)
+
+        json_file = open(f"{self.name_model}_discriminator.json", "r")
+        loaded_model_json = json_file.read()
+        json_file.close()
+        self.discriminator = tf.keras.models.model_from_json(loaded_model_json)
+        self.discriminator.build(input_shape=(batch_size, self.input_shape_tuple))
+
+        # load weights into new model
+        self.generator.load_weights(f"{self.name_model}_generator.h5")
+        self.discriminator.load_weights(f"{self.name_model}_discriminator.h5")
+        print("Loaded model from disk")
+
+    def train(
+        self,
+        dataset,
+        epochs,
+        n_steps_gen=None,
+        n_steps_disc=None,
+        freq_plot=None,
+        n_to_plot=4,
+    ):
+        """
+        Train GAN
+
+        :param dataset: Tensorflow dataset used for training
+        :param epochs: number of epochs
+        :param n_steps_gen: number of training step per epoch for the generator
+        :param n_steps_disc: number of training step per epoch for the discriminator
+        :param freq_plot: frequency for image plot
+        :param n_to_plot: number of generated images to plot
+
+        """
+        if not n_steps_gen and not n_steps_disc:
+            for epoch in range(epochs):
+                for image_batch in dataset:
+                    self.disc_loss = self.discriminator_train_step(image_batch)
+                    self.gen_loss = self.generator_train_step(image_batch)
+                self.print_epoch(epoch)
+                self._save_network()
+                if (epoch + 1) % freq_plot == 0:
+                    self.generate_and_plot(n_to_plot)
+        else:
+            if not n_steps_gen:
+                n_steps_gen = 1
+            if not n_steps_disc:
+                n_steps_disc = 1
+            for epoch in range(epochs):
+                for n in range(n_steps_disc):
+                    for image_batch in dataset:
+                        self.disc_loss = self.discriminator_train_step(image_batch)
+                for n in range(n_steps_gen):
+                    for image_batch in dataset:
+                        self.gen_loss = self.generator_train_step(image_batch)
+                self.print_epoch(epoch)
+                self._save_network()
+                if (epoch + 1) % freq_plot == 0:
+                    self.generate_and_plot(n_to_plot)

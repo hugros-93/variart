@@ -42,7 +42,7 @@ def test_rescale():
     Video.X = data
 
     # When
-    Video.rescale_image()
+    Video.rescale_images()
 
     # Then
     assert Video.X.max() <= 1 and Video.X.min() >= 0
