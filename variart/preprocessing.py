@@ -24,7 +24,7 @@ class ArtObject:
         self.shape = []
 
     def rescale_images(self):
-        self.X = np.array([rescale_image(x) for x in self.X])
+        self.X = self.X / 255 
 
     def grey_images(self):
         self.X = self.X.mean(axis=3)

@@ -183,7 +183,7 @@ class Latent:
             for i in range(step):
                 z = [y + i * (x - y) / step for x, y in zip(z2, z1)]
                 z = np.array(z).reshape(1, self.model.latent_dim)
-                decoded_img = rescale_image(self.model.decode(z, apply_sigmoid=True))
+                decoded_img = rescale_image(self.model.decode(z, apply_sigmoid=True)[0])
                 images.append(np.array(decoded_img, np.uint8))
 
         with imageio.get_writer(filename, mode="I") as writer:
