@@ -1,11 +1,13 @@
 import pytest
 import numpy as np
 import tensorflow as tf
-from variart.model import VAE
+from variart.model import VAE, GAN
 
 data = np.random.rand(16, 16, 16).astype("float32")
+
 batch_size = 4
 latent_dim = 2
+
 input_shape = (batch_size, data.shape[0], data.shape[1])
 inference_net = tf.keras.Sequential(
     [tf.keras.layers.Flatten(), tf.keras.layers.Dense(2 * latent_dim)]
@@ -17,8 +19,21 @@ generative_net = tf.keras.Sequential(
     ]
 )
 
+noise_dim = 2
+generator = tf.keras.Sequential(
+    [
+        tf.keras.layers.Dense(input_shape[1] * input_shape[2]),
+        tf.keras.layers.Reshape((input_shape[1], input_shape[2])),
+    ]
+)
+discriminator = tf.keras.Sequential(
+    [
+        tf.keras.layers.Flatten(), 
+        tf.keras.layers.Dense(1)
+    ]
+)
 
-def test_name():
+def test_name_VAE():
 
     # Given
     name = "VAE"
@@ -29,6 +44,16 @@ def test_name():
     # Then
     assert model.name_model == name
 
+def test_name_GAN():
+
+    # Given
+    name = "GAN"
+
+    # When
+    model = GAN(name, noise_dim, input_shape, generator, discriminator)
+
+    # Then
+    assert model.name_model == name
 
 def test_train_shape_latent():
 
