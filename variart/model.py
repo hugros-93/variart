@@ -6,7 +6,9 @@ from IPython import display
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-# Reference: https://www.tensorflow.org/tutorials/generative/cvae
+# References: 
+# - https://www.tensorflow.org/tutorials/generative/cvae
+# - https://www.tensorflow.org/tutorials/generative/dcgan
 
 
 def log_normal_pdf(sample, mean, logvar, raxis=1):
