@@ -9,11 +9,12 @@ from plotly.subplots import make_subplots
 
 from .preprocessing import rescale_image
 
-# References: 
+# References:
 # - https://www.tensorflow.org/tutorials/generative/cvae
 # - https://www.tensorflow.org/tutorials/generative/dcgan
 
 # VAE #
+
 
 def log_normal_pdf(sample, mean, logvar, raxis=1):
     log2pi = tf.math.log(2.0 * np.pi)
@@ -245,19 +246,22 @@ class VAE(tf.keras.Model):
                 )
         return self
 
+
 # GAN #
 
 cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
+
 def generator_loss(fake_output, wgan=False):
     if wgan:
-        return tf.reduce_mean(1-fake_output)
+        return tf.reduce_mean(1 - fake_output)
     else:
         return cross_entropy(tf.ones_like(fake_output), fake_output)
 
+
 def discriminator_loss(real_output, fake_output, wgan=False):
     if wgan:
-        real_loss = tf.reduce_mean(1-real_output)
+        real_loss = tf.reduce_mean(1 - real_output)
         fake_loss = tf.reduce_mean(fake_output)
     else:
         real_loss = cross_entropy(tf.ones_like(real_output), real_output)
@@ -265,12 +269,22 @@ def discriminator_loss(real_output, fake_output, wgan=False):
     total_loss = real_loss + fake_loss
     return total_loss
 
+
 class GAN(tf.keras.Model):
     """
     Class to define a Generative Adversial Network (GAN)
     """
-    def __init__(self, name_model, noise_dim, input_shape_tuple, generator, discriminator, 
-    learning_rate = 1e-4, wgan=False):
+
+    def __init__(
+        self,
+        name_model,
+        noise_dim,
+        input_shape_tuple,
+        generator,
+        discriminator,
+        learning_rate=1e-4,
+        wgan=False,
+    ):
         super().__init__()
         self.name_model = name_model
         self.noise_dim = noise_dim
@@ -282,7 +296,9 @@ class GAN(tf.keras.Model):
 
         if wgan:
             self.generator_optimizer = RMSprop(learning_rate=learning_rate)
-            self.discriminator_optimizer = RMSprop(learning_rate=learning_rate, clipvalue=0.01)
+            self.discriminator_optimizer = RMSprop(
+                learning_rate=learning_rate, clipvalue=0.01
+            )
         else:
             self.generator_optimizer = Adam(learning_rate)
             self.discriminator_optimizer = Adam(learning_rate)
@@ -290,14 +306,18 @@ class GAN(tf.keras.Model):
     @tf.function
     def generator_train_step(self, images):
         noise = tf.random.normal([images.shape[0], self.noise_dim])
-        
+
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             generated_images = self.generator(noise, training=True)
             fake_output = self.discriminator(generated_images, training=True)
             gen_loss = generator_loss(fake_output, wgan=self.wgan)
 
-        gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
-        self.generator_optimizer.apply_gradients(zip(gradients_of_generator, self.generator.trainable_variables))
+        gradients_of_generator = gen_tape.gradient(
+            gen_loss, self.generator.trainable_variables
+        )
+        self.generator_optimizer.apply_gradients(
+            zip(gradients_of_generator, self.generator.trainable_variables)
+        )
 
         return gen_loss
 
@@ -311,13 +331,19 @@ class GAN(tf.keras.Model):
             fake_output = self.discriminator(generated_images, training=True)
             disc_loss = discriminator_loss(real_output, fake_output, wgan=self.wgan)
 
-        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
-        self.discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, self.discriminator.trainable_variables))
+        gradients_of_discriminator = disc_tape.gradient(
+            disc_loss, self.discriminator.trainable_variables
+        )
+        self.discriminator_optimizer.apply_gradients(
+            zip(gradients_of_discriminator, self.discriminator.trainable_variables)
+        )
 
         return disc_loss
 
     def print_epoch(self, epoch):
-        print (f'Epoch {epoch+1} \t|\t gen_loss={self.gen_loss} \t|\t disc_loss={self.disc_loss}')
+        print(
+            f"Epoch {epoch+1} \t|\t gen_loss={self.gen_loss} \t|\t disc_loss={self.disc_loss}"
+        )
 
     def generate_and_plot(self, n_to_plot, return_fig=False):
         fig = make_subplots(rows=1, cols=n_to_plot)
@@ -369,7 +395,26 @@ class GAN(tf.keras.Model):
         self.discriminator.load_weights(f"{self.name_model}_discriminator.h5")
         print("Loaded model from disk")
 
-    def train(self, dataset, epochs, n_steps_gen=1, n_steps_disc=None, freq_plot=None, n_to_plot=4):
+    def train(
+        self,
+        dataset,
+        epochs,
+        n_steps_gen=None,
+        n_steps_disc=None,
+        freq_plot=None,
+        n_to_plot=4,
+    ):
+        """
+        Train GAN
+
+        :param dataset: Tensorflow dataset used for training
+        :param epochs: number of epochs
+        :param n_steps_gen: number of training step per epoch for the generator
+        :param n_steps_disc: number of training step per epoch for the discriminator
+        :param freq_plot: frequency for image plot
+        :param n_to_plot: number of generated images to plot
+
+        """
         if not n_steps_gen and not n_steps_disc:
             for epoch in range(epochs):
                 for image_batch in dataset:
@@ -377,13 +422,13 @@ class GAN(tf.keras.Model):
                     self.gen_loss = self.generator_train_step(image_batch)
                 self.print_epoch(epoch)
                 self._save_network()
-                if (epoch+1) % freq_plot == 0:
+                if (epoch + 1) % freq_plot == 0:
                     self.generate_and_plot(n_to_plot)
         else:
             if not n_steps_gen:
-                n_steps_gen=1
+                n_steps_gen = 1
             if not n_steps_disc:
-                n_steps_disc=1
+                n_steps_disc = 1
             for epoch in range(epochs):
                 for n in range(n_steps_disc):
                     for image_batch in dataset:
@@ -393,5 +438,5 @@ class GAN(tf.keras.Model):
                         self.gen_loss = self.generator_train_step(image_batch)
                 self.print_epoch(epoch)
                 self._save_network()
-                if (epoch+1) % freq_plot == 0:
+                if (epoch + 1) % freq_plot == 0:
                     self.generate_and_plot(n_to_plot)

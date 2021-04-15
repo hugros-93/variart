@@ -5,12 +5,14 @@ import random
 import plotly.express as px
 import matplotlib.pyplot as plt
 
+
 def rescale_image(img):
     max_ = np.max(img)
     min_ = np.min(img)
     new_img = 255 * img / (max_ - min_)
     new_img -= np.min(new_img)
     return new_img
+
 
 class ArtObject:
     """
@@ -24,7 +26,7 @@ class ArtObject:
         self.shape = []
 
     def rescale_images(self):
-        self.X = self.X / 255 
+        self.X = self.X / 255
 
     def grey_images(self):
         self.X = self.X.mean(axis=3)

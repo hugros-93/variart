@@ -104,13 +104,13 @@ class Latent:
     def plot_encoded_decoded(self, list_id):
         fig = make_subplots(rows=2, cols=len(list_id))
         for i, j in enumerate(list_id):
-            new_img=rescale_image(self.data[j])
+            new_img = rescale_image(self.data[j])
             fig.add_trace(
                 px.imshow(new_img).data[0],
                 row=1,
                 col=i + 1,
             )
-            new_img=rescale_image(self.Z_decoded[j])
+            new_img = rescale_image(self.Z_decoded[j])
             fig.add_trace(
                 px.imshow(new_img).data[0],
                 row=2,
@@ -128,7 +128,7 @@ class Latent:
 
     def generate_image(self, n=1, c=1, method="dist", id_img=None):
         """
-        For `method`, use "dist" to sample from learned distribution, "random" to randomly sample 
+        For `method`, use "dist" to sample from learned distribution, "random" to randomly sample
         from the latent space (centered in 0) and "from_id_img" to sample around a given image (need `id_img`).
         The `c` parameter controle the deviation for sampling around mean, center or image.
         """
@@ -158,7 +158,9 @@ class Latent:
 
         for i, z in enumerate(list_z):
             decoded_img = np.array(z).reshape(1, self.model.latent_dim)
-            decoded_img = rescale_image(self.model.decode(decoded_img, apply_sigmoid=True)[0])
+            decoded_img = rescale_image(
+                self.model.decode(decoded_img, apply_sigmoid=True)[0]
+            )
             fig.add_trace(
                 px.imshow(decoded_img).data[0],
                 row=1,
