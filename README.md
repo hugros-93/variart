@@ -43,8 +43,13 @@ gan_model = GAN(name_model, noise_dim, input_shape_tuple, generator, discriminat
 gan_model.train(train_dataset)
 
 # Generate images
-gan_model.generate_and_plot(n_to_plot=10)
+gan_model.generate_and_plot(n_to_plot=4)
 ```
+`output:`
+
+<p align="center">
+  <img src="outputs/gan.png" width=700>
+</p>
 
 Define and train a VAE using `tensorflow`
 ```python
