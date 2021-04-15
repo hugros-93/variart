@@ -341,6 +341,37 @@ class GAN(tf.keras.Model):
         display.clear_output(wait=True)
         fig.show()
 
+    def _save_network(self):
+        # serialize model to JSON
+        model_json_generator = self.generator.to_json()
+        model_json_discriminator = self.discriminator.to_json()
+        with open(f"{self.name_model}_generator.json", "w") as json_file:
+            json_file.write(model_json_generator)
+        with open(f"{self.name_model}_discriminator.json", "w") as json_file:
+            json_file.write(model_json_discriminator)
+        # serialize weights to HDF5
+        self.generator.save_weights(f"{self.name_model}_generator.h5")
+        self.discriminator.save_weights(f"{self.name_model}_discriminator.h5")
+
+    def load_model(self, batch_size):
+        # load json and create model
+        json_file = open(f"{self.name_model}_generator.json", "r")
+        loaded_model_json = json_file.read()
+        json_file.close()
+        self.generator = tf.keras.models.model_from_json(loaded_model_json)
+        self.generator.build(input_shape=self.noise_dim)
+
+        json_file = open(f"{self.name_model}_discriminator.json", "r")
+        loaded_model_json = json_file.read()
+        json_file.close()
+        self.discriminator = tf.keras.models.model_from_json(loaded_model_json)
+        self.discriminator.build(input_shape=(batch_size, self.input_shape_tuple))
+
+        # load weights into new model
+        self.inference_net.load_weights(f"{self.name_model}_encoder.h5")
+        self.generative_net.load_weights(f"{self.name_model}_decoder.h5")
+        print("Loaded model from disk")
+
     def train(self, dataset, epochs, n_steps_gen=1, n_steps_disc=None, freq_plot=None):
         if not n_steps_gen and not n_steps_disc:
             for epoch in range(epochs):
@@ -348,6 +379,7 @@ class GAN(tf.keras.Model):
                     self.disc_loss = self.discriminator_train_step(image_batch)
                     self.gen_loss = self.generator_train_step(image_batch)
                 self.print_epoch(epoch)
+                self._save_network()
                 if (epoch+1) % freq_plot == 0:
                     self.generate_and_plot()
         else:
@@ -363,3 +395,6 @@ class GAN(tf.keras.Model):
                     for image_batch in dataset:
                         self.gen_loss = self.generator_train_step(image_batch)
                 self.print_epoch(epoch)
+                self._save_network()
+                if (epoch+1) % freq_plot == 0:
+                    self.generate_and_plot()
