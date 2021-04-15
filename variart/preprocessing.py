@@ -26,6 +26,10 @@ class ArtObject:
     def rescale_images(self):
         self.X = np.array([rescale_image(x) for x in self.X])
 
+    def grey_images(self):
+        self.X = self.X.mean(axis=3)
+        self.X = np.expand_dims(self.X, 3)
+
     def show_random_image(self):
         i = random.randint(0, self.shape[0] - 1)
         new_img = rescale_image(self.X[i])
