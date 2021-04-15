@@ -284,6 +284,7 @@ class GAN(tf.keras.Model):
         discriminator,
         learning_rate=1e-4,
         wgan=False,
+        scale=1.5,
     ):
         super().__init__()
         self.name_model = name_model
@@ -293,6 +294,7 @@ class GAN(tf.keras.Model):
         self.discriminator = discriminator
         self.wgan = wgan
         self.learning_rate = learning_rate
+        self.size = input_shape_tuple[0]
 
         if wgan:
             self.generator_optimizer = RMSprop(learning_rate=learning_rate)
@@ -345,7 +347,7 @@ class GAN(tf.keras.Model):
             f"Epoch {epoch+1} \t|\t gen_loss={self.gen_loss} \t|\t disc_loss={self.disc_loss}"
         )
 
-    def generate_and_plot(self, n_to_plot, return_fig=False):
+    def generate_and_plot(self, n_to_plot, return_fig=False, scale=1.5):
         fig = make_subplots(rows=1, cols=n_to_plot)
         for i in range(n_to_plot):
             noise = tf.random.normal([1, self.noise_dim])
@@ -356,7 +358,12 @@ class GAN(tf.keras.Model):
                 row=1,
                 col=i + 1,
             )
-        fig.update_layout(coloraxis_showscale=False, hovermode=False)
+            fig.update_layout(
+                height=self.size * scale,
+                width=self.size * n_to_plot * scale,
+                coloraxis_showscale=False,
+                margin={"l": 0, "r": 0, "t": 0, "b": 0},
+            )
         fig.update_xaxes(showticklabels=False)
         fig.update_yaxes(showticklabels=False)
         display.clear_output(wait=True)

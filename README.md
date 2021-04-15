@@ -121,4 +121,5 @@ for c in [0, 1, 5, 10, 25]:
 A complete example is available in `example.py`.
 
 _References:_
+- *https://www.tensorflow.org/tutorials/generative/dcgan*
 - *https://www.tensorflow.org/tutorials/generative/cvae*
