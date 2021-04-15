@@ -73,8 +73,6 @@ class VAE(tf.keras.Model):
             loss = self.compute_loss(x)
         return tape.gradient(loss, self.trainable_variables), loss
 
-
-
     def plot_training_images(self, data_validation, x_logit, n_to_plot):
         fig = make_subplots(rows=2, cols=n_to_plot)
         for i in range(n_to_plot):
