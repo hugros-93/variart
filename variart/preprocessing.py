@@ -5,6 +5,12 @@ import random
 import plotly.express as px
 import matplotlib.pyplot as plt
 
+def rescale_image(img):
+    max_ = np.max(img)
+    min_ = np.min(img)
+    new_img = 255 * img / (max_ - min_)
+    new_img -= np.min(new_img)
+    return new_img
 
 class ArtObject:
     """
@@ -17,13 +23,13 @@ class ArtObject:
         self.X = None
         self.shape = []
 
-    def rescale_image(self):
-        self.X = np.interp(self.X, (0, 255), (0, 1))
+    def rescale_images(self):
+        self.X = np.array([rescale_image(x) for x in self.X])
 
     def show_random_image(self):
         i = random.randint(0, self.shape[0] - 1)
-        img = self.X[i]
-        fig = px.imshow(np.interp(img, (0, 1), (0, 255)))
+        new_img = rescale_image(self.X[i])
+        fig = px.imshow(new_img)
         fig.update_layout(
             coloraxis_showscale=False, margin={"l": 0, "r": 0, "t": 0, "b": 0}
         )

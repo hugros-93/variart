@@ -7,10 +7,11 @@ from IPython import display
 import plotly.express as px
 from plotly.subplots import make_subplots
 
+from .preprocessing import rescale_image
+
 # References: 
 # - https://www.tensorflow.org/tutorials/generative/cvae
 # - https://www.tensorflow.org/tutorials/generative/dcgan
-
 
 # VAE #
 
@@ -72,16 +73,20 @@ class VAE(tf.keras.Model):
             loss = self.compute_loss(x)
         return tape.gradient(loss, self.trainable_variables), loss
 
+
+
     def plot_training_images(self, data_validation, x_logit, n_to_plot):
         fig = make_subplots(rows=2, cols=n_to_plot)
         for i in range(n_to_plot):
+            new_img = rescale_image(data_validation[i])
             fig.add_trace(
-                px.imshow(np.interp(data_validation[i], (0, 1), (0, 255))).data[0],
+                px.imshow(new_img).data[0],
                 row=1,
                 col=i + 1,
             )
+            new_img = rescale_image(x_logit[i])
             fig.add_trace(
-                px.imshow(np.interp(x_logit[i], (0, 1), (0, 255))).data[0],
+                px.imshow(new_img).data[0],
                 row=2,
                 col=i + 1,
             )
@@ -262,14 +267,6 @@ def discriminator_loss(real_output, fake_output, wgan=False):
     total_loss = real_loss + fake_loss
     return total_loss
 
-def rescale_image(img):
-    max_ = np.max(img)
-    min_ = np.min(img)
-    new_img = 255 * img / (max_ - min_)
-    new_img -= np.min(new_img)
-    return new_img
-
-
 class GAN(tf.keras.Model):
     """
     Class to define a Generative Adversial Network (GAN)
@@ -324,22 +321,24 @@ class GAN(tf.keras.Model):
     def print_epoch(self, epoch):
         print (f'Epoch {epoch+1} \t|\t gen_loss={self.gen_loss} \t|\t disc_loss={self.disc_loss}')
 
-    def generate_and_plot(self):
-        noise = tf.random.normal([1, self.noise_dim])
-        generated_image = self.generator(noise, training=False)[0]
-        
-        new_img = rescale_image(generated_image)
-
-        fig = px.imshow(new_img)
-        fig.update_layout(
-            height=300,
-            width=800,
-            coloraxis_showscale=False,
-            hovermode=False)
+    def generate_and_plot(self, n_to_plot, return_fig=False):
+        fig = make_subplots(rows=1, cols=n_to_plot)
+        for i in range(n_to_plot):
+            noise = tf.random.normal([1, self.noise_dim])
+            generated_image = self.generator(noise, training=False)[0]
+            new_img = rescale_image(generated_image)
+            fig.add_trace(
+                px.imshow(new_img).data[0],
+                row=1,
+                col=i + 1,
+            )
+        fig.update_layout(coloraxis_showscale=False, hovermode=False)
         fig.update_xaxes(showticklabels=False)
         fig.update_yaxes(showticklabels=False)
         display.clear_output(wait=True)
         fig.show()
+        if return_fig:
+            return fig
 
     def _save_network(self):
         # serialize model to JSON
@@ -368,11 +367,11 @@ class GAN(tf.keras.Model):
         self.discriminator.build(input_shape=(batch_size, self.input_shape_tuple))
 
         # load weights into new model
-        self.inference_net.load_weights(f"{self.name_model}_encoder.h5")
-        self.generative_net.load_weights(f"{self.name_model}_decoder.h5")
+        self.generator.load_weights(f"{self.name_model}_generator.h5")
+        self.discriminator.load_weights(f"{self.name_model}_discriminator.h5")
         print("Loaded model from disk")
 
-    def train(self, dataset, epochs, n_steps_gen=1, n_steps_disc=None, freq_plot=None):
+    def train(self, dataset, epochs, n_steps_gen=1, n_steps_disc=None, freq_plot=None, n_to_plot=4):
         if not n_steps_gen and not n_steps_disc:
             for epoch in range(epochs):
                 for image_batch in dataset:
@@ -381,7 +380,7 @@ class GAN(tf.keras.Model):
                 self.print_epoch(epoch)
                 self._save_network()
                 if (epoch+1) % freq_plot == 0:
-                    self.generate_and_plot()
+                    self.generate_and_plot(n_to_plot)
         else:
             if not n_steps_gen:
                 n_steps_gen=1
@@ -397,4 +396,4 @@ class GAN(tf.keras.Model):
                 self.print_epoch(epoch)
                 self._save_network()
                 if (epoch+1) % freq_plot == 0:
-                    self.generate_and_plot()
+                    self.generate_and_plot(n_to_plot)
