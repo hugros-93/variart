@@ -3,10 +3,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/hugros-93/variart/actions/workflows/main.yml/badge.svg)](https://github.com/hugros-93/kichtai/actions/workflows/main.yml)
 
-Use variational autoencoders to perform image latent analysis and generate new images.
+Use generative models to perform image latent analysis and generate new images.
 
 - Set of tools for the preprocessing of videos or sets of images
-- Train a VAE using __tensorflow__
+- Train a GAN or a VAE using __tensorflow__
 - Perform latent space analysis, generate new images and create GIFs
 
 <p align="center">
@@ -34,21 +34,25 @@ DrillFR4.resize(new_shape=new_shape)
 DrillFR4.rescale_image()
 ```
 
+Define and train a GAN using `tensorflow`
+```python
+# Create GAN object
+gan_model = GAN(name_model, noise_dim, input_shape_tuple, generator, discriminator)
+
+# Train GAN
+gan_model.train(train_dataset)
+
+# Generate images
+gan_model.generate_and_plot(n_to_plot=10)
+```
+
 Define and train a VAE using `tensorflow`
 ```python
 # Model definition
-model = VAE(DrillFR4.name, latent_dim, input_shape, inference_net, generative_net)
+vae_model = VAE(DrillFR4.name, latent_dim, input_shape, inference_net, generative_net)
 
 # Train
-model = model.train(optimizer, 
-                    train_dataset, 
-                    validation_dataset, 
-                    epochs,
-                    batch_size,
-                    early_stop_patience = early_stop_patience, 
-                    freq_plot = 25, 
-                    plot_test = True,
-                    n_to_plot = 4)
+vae_model = vae_model.train(optimizer, train_dataset, validation_dataset, epochs, batch_size)
 ```
 
 Once trained, it is possible to project all images in the latent space and perform clustering.
